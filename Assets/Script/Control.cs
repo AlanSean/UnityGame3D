@@ -1,13 +1,31 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-
+// using WeChatWASM;
 public class Control : MonoBehaviour
 {
-  [Tooltip("指示器的精灵")]
-  public Sprite PointSprite;
-  public void reset()
+  public UIManger menu;
+  public Player player;
+  void Awake()
   {
-    Ball.instance.reset();
+    // WX.InitSDK((int code) =>
+    // {
+    //   Debug.Log("code----------" + code);
+    // });
+    // WX.Login(new LoginOption()
+    // {
+    //   success = (LoginSuccessCallbackResult res) =>
+    //   {
+    //     Debug.Log("Login----------" + res.code);
+    //   }
+    // });
+  }
+  public void Reset()
+  {
+    Ball.instance.Reset();
+  }
+
+  public void Play()
+  {
+    menu.Hide();
+    player.Play();
   }
 }

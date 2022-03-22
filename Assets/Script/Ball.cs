@@ -16,18 +16,10 @@ public class Ball : MonoBehaviour
   }
 
   [SerializeField] private Camera MainCamera;
-  [Header("速度系数")]
-  /// <summary>
-  /// 速度系数
-  /// </summary>
-  public float SpeedFactor = 20f;
-  [Tooltip("指示器的精灵")]
-  public Sprite PointSprite;
-  public float ballMaxVector = 3;
-  public float ballminVector = 1;
-
+  private float SpeedFactor;
 
   private Player player;
+  private Line line;
   private Rigidbody rb;
   private bool isTouchDown = false;
   //出发点
@@ -35,84 +27,68 @@ public class Ball : MonoBehaviour
   // 触摸结束点
   private Vector3 EndRayHit;
   private float Distance;
-  private Vector3 VelocityVector;
-  //推进速度
   private Vector3 PushSpeed;
-
-  float angle = 0;
   void Awake()
   {
     player = Player.instance;
+    line = Line.instance;
+    SpeedFactor = player.SpeedFactor;
   }
   void Start()
   {
+    MainCamera = Camera.main;
     rb = GetComponent<Rigidbody>();
     rb.isKinematic = true;
-    isTouchDown = true;
   }
 
   void OnMouseDown()
   {
+    if (isTouchDown) return;
     StartRayHit = MainCamera.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, transform.position.z));
+
   }
   void OnMouseDrag()
   {
+    if (isTouchDown) return;
     EndRayHit = MainCamera.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, transform.position.z));
+
     Distance = Vector3.Distance(StartRayHit, EndRayHit);
-    // 计算速度向量
-    VelocityVector = (StartRayHit - EndRayHit).normalized;
-    angle = Distance * -125f;
-    transform.eulerAngles = new Vector3(angle, 0, 0);
+    //动态调整篮球角度
+    transform.eulerAngles = new Vector3((StartRayHit.y - EndRayHit.y) * -125f, (StartRayHit.x - EndRayHit.x) * 225f, 0);
     //计算推进的速度
-    PushSpeed = Distance * VelocityVector * SpeedFactor;
-    PushSpeed.z = SpeedFactor * Distance;
-    player.UpdateTrajectoryPoints(transform.position, PushSpeed);
-    player.ShowPoints();
-
-
-    //计算角度
+    PushSpeed = Distance * transform.forward * player.SpeedFactor;
+    line.DarwLine(Distance);
   }
 
   void OnMouseUp()
   {
-    //初速度
-    //
     // 拖动大于0.1才能进行发射
     if (Distance > 0.1f)
     {
+      line.Hide();
       rb.isKinematic = false;
-      //添加脉冲
-      rb.AddForce(PushSpeed, ForceMode.Impulse);
+      rb.velocity = PushSpeed;
       rb.AddTorque(PushSpeed);
+      isTouchDown = true;
     }
     else
     {
-      player.HidePoints();
-      reset();
+      Reset();
     }
-    isTouchDown = false;
   }
 
   private void OnCollisionEnter(Collision other)
   {
-    if (other.gameObject.tag != "Obstacle")
-    {
-      player.HidePoints();
-    }
-
-
     if (other.gameObject.tag == "Floor")
     {
-      reset();
+      Reset();
     }
   }
-  public void reset()
+  public void Reset()
   {
     rb.isKinematic = true;
     isTouchDown = false;
-    angle = 0;
     transform.position = new Vector3(0, 0, 2f);
     transform.eulerAngles = new Vector3(0, 0, 0);
-    rb.isKinematic = true;
   }
 }
